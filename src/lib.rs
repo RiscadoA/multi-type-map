@@ -34,13 +34,13 @@ impl<T: 'static> MultiTypeMap<T> {
     }
 
     /// Gets an immutable reference to the value corresponding to the given key.
-    pub fn get<K: 'static + Eq + Hash>(&self, key: K) -> Option<&T> {
-        self.map::<K>().and_then(|map| map.get(&key))
+    pub fn get<K: 'static + Eq + Hash>(&self, key: &K) -> Option<&T> {
+        self.map::<K>().and_then(|map| map.get(key))
     }
 
     /// Gets a mutable reference to the value corresponding to the given key.
-    pub fn get_mut<K: 'static + Eq + Hash>(&mut self, key: K) -> Option<&mut T> {
-        self.map_mut::<K>().get_mut(&key)
+    pub fn get_mut<K: 'static + Eq + Hash>(&mut self, key: &K) -> Option<&mut T> {
+        self.map_mut::<K>().get_mut(key)
     }
 
     /// Gets an immutable reference to the map for the given key type.
@@ -91,13 +91,13 @@ mod tests {
         map.insert(false, 0);
         map.insert("hey", 3);
 
-        assert_eq!(map.get_mut(false), Some(&mut 0));
-        map.get_mut(false).map(|v| *v = 1);
-        assert_eq!(map.get_mut(false), Some(&mut 1));
+        assert_eq!(map.get_mut(&false), Some(&mut 0));
+        map.get_mut(&false).map(|v| *v = 1);
+        assert_eq!(map.get_mut(&false), Some(&mut 1));
 
-        assert_eq!(map.get_mut("hey"), Some(&mut 3));
-        map.get_mut("hey").map(|v| *v = 4);
-        assert_eq!(map.get_mut("hey"), Some(&mut 4));
+        assert_eq!(map.get_mut(&"hey"), Some(&mut 3));
+        map.get_mut(&"hey").map(|v| *v = 4);
+        assert_eq!(map.get_mut(&"hey"), Some(&mut 4));
     }
 
     #[test]
@@ -113,7 +113,7 @@ mod tests {
         assert_eq!(map.insert("foo".to_owned(), 4), Some(3));
 
         // We can still get the `&str` key.
-        assert_eq!(map.get("foo"), Some(&2));
-        assert_eq!(map.get("foo".to_owned()), Some(&4));
+        assert_eq!(map.get(&"foo"), Some(&2));
+        assert_eq!(map.get(&"foo".to_owned()), Some(&4));
     }
 }
