@@ -10,6 +10,7 @@ use std::{
 /// Values must be `'static`.
 pub struct MultiTypeMap<T> {
     maps: HashMap<TypeId, Box<dyn Any>>,
+    length: usize,
     _marker: PhantomData<T>,
 }
 
@@ -18,6 +19,7 @@ impl<T: 'static> MultiTypeMap<T> {
     pub fn new() -> Self {
         Self {
             maps: HashMap::new(),
+            length: 0,
             _marker: PhantomData,
         }
     }
@@ -25,12 +27,19 @@ impl<T: 'static> MultiTypeMap<T> {
     /// Inserts a value into the map. If the map did not have this key present, `None` is returned.
     /// If the map did have this key present, the value is updated, and the old value is returned.
     pub fn insert<K: 'static + Eq + Hash>(&mut self, key: K, value: T) -> Option<T> {
-        self.map_mut().insert(key, value)
+        self.length += 1;
+        self.map_mut().insert(key, value).map(|value| {
+            self.length -= 1;
+            value
+        })
     }
 
     /// Removes a key from the map, returning the value at the key if the key was previously in the map.
     pub fn remove<K: 'static + Eq + Hash>(&mut self, key: &K) -> Option<T> {
-        self.map_mut::<K>().remove(key)
+        self.map_mut::<K>().remove(key).map(|value| {
+            self.length -= 1;
+            value
+        })
     }
 
     /// Gets an immutable reference to the value corresponding to the given key.
@@ -58,6 +67,14 @@ impl<T: 'static> MultiTypeMap<T> {
             .or_insert_with(|| Box::<HashMap<K, T>>::default())
             .downcast_mut()
             .expect("two different types should not have the same TypeId")
+    }
+
+    pub fn len(&self) -> usize {
+        self.length
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.length == 0
     }
 }
 
